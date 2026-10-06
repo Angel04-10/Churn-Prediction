@@ -9,9 +9,17 @@ This model predicts which customers will churn in 60+ days, enabling cost-effect
 
 ## Simulated Dataset
 - **Records:** 4,500 customers
-- **Features:** 20 (demographics, purchase behavior, engagement)
+- **Features:** 19 (demographics, purchase behavior, engagement)
 - **Target:** Churn (binary: churned/active)
 - **Churn Rate:** 27.49%
+
+## Project Structure
+```
+src/
+├── preprocessing.py  - Data cleaning
+├── models.py        - Model training
+└── evaluation.py    - Metrics & business impact
+```
 
 ## Key Findings
 1. Days since purchase is strongest churn predictor (+0.27 correlation)

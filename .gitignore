@@ -218,3 +218,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Trained model (rebuilt automatically by app.py / churn_model.py)
+models/

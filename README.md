@@ -11,11 +11,16 @@ This model predicts which customers will churn in 60+ days, enabling cost-effect
 - **Records:** 4,500 customers
 - **Features:** 19 (demographics, purchase behavior, engagement)
 - **Target:** Churn (binary: churned/active)
-- **Churn Rate:** 27.49%
+- **Churn Rate:** 21.29%
 
 ## Key Findings
-1. Days since purchase is strongest churn predictor (+0.27 correlation)
-2. Subscription status protects against churn (-0.20 correlation)
+1. **Days since purchase is the strongest churn predictor** (correlation +0.27; about three-quarters of the model's predictive power). Churn rate is ~12% for customers inactive 0–30 days, ~13% for 31–60 days, ~33% for 61–90 days and ~46% for 90+ days.
+2. **Subscription status protects against churn** (correlation −0.20). Customers without a subscription churn at 32%, about double the rate of subscribers (Premium 14%, Regular 16%).
+3. **Review rating has a small effect** (correlation −0.07). Customers rating above 4.5 churn at 14% vs. 23% for the rest.
+4. **Return frequency is a weak signal** (correlation +0.04). Churn rises only from ~20% to ~24% across the full 0–40% return range.
+5. Other features (age, gender, city, account age, purchase frequency and amount, discounts, app usage, customer service interactions) show no measurable effect.
+
+Ranking from grouped permutation importance on held-out data; see [`MODEL_REPORT.md`](MODEL_REPORT.md).
 
 ### Tech Stack
 - Python 3.x

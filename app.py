@@ -29,8 +29,10 @@ LABELS = {
     "Mobile_App_User": ("Mobile app user", None),
 }
 
-HELP = """I predict the **probability that a customer churns**, using the Random Forest
-trained in `Churn_Prediction.ipynb`. Describe a customer in plain English, e.g.
+HELP = f"""I predict the **probability that a customer churns** with a calibrated
+{BUNDLE['model_name']} model (see `MODEL_REPORT.md`), and flag customers at or above
+**{BUNDLE['threshold']:.0%}** for a retention offer — a threshold tuned to catch most
+churners ({BUNDLE['evaluation']['at_threshold']['recall']:.0%} on held-out data). Describe a customer in plain English, e.g.
 
 > *What is the probability of churn if days since purchase is 123, purchase frequency
 > per month is 2.21, return frequency is 0.26 and subscription status is regular?*
@@ -53,11 +55,11 @@ def _fmt(feature: str, value) -> str:
 
 
 def _risk(p: float) -> tuple[str, str]:
-    if p >= 0.6:
-        return "🔴 High risk", "Prioritise a win-back / retention offer now."
-    if p >= 0.3:
-        return "🟠 Medium risk", "A good candidate for a targeted retention offer."
-    return "🟢 Low risk", "Keep nurturing — no special offer needed."
+    if p >= 0.5:
+        return "🔴 High risk", "**Target now** — prioritise a win-back / retention offer."
+    if p >= BUNDLE["threshold"]:
+        return "🟠 Elevated risk", "**Target** — include in the retention campaign."
+    return "🟢 Low risk", "Not targeted — keep nurturing."
 
 
 def _user_texts(history) -> list[str]:
@@ -86,7 +88,7 @@ def _customer_from_conversation(message: str, history) -> dict:
     return customer
 
 
-def respond(message: str, history, model_name: str) -> str:
+def respond(message: str, history, *_ignored) -> str:
     if not message.strip() or message.strip().lower() in {"help", "?", "hi", "hello", "hey"}:
         return HELP
 
@@ -99,7 +101,7 @@ def respond(message: str, history, model_name: str) -> str:
     if not customer:
         return "Okay, starting fresh. Describe the new customer."
 
-    p = churn_model.predict(BUNDLE, customer, model_name)
+    p = churn_model.predict(BUNDLE, customer)
     risk, action = _risk(p)
 
     lines = [
@@ -114,8 +116,8 @@ def respond(message: str, history, model_name: str) -> str:
     effects = []
     for f in customer:
         baseline = {**customer, f: BUNDLE["defaults"][f]}
-        delta = p - churn_model.predict(BUNDLE, baseline, model_name)
-        if abs(delta) >= 0.01:
+        delta = p - churn_model.predict(BUNDLE, baseline)
+        if abs(delta) >= 0.02:
             effects.append((delta, f))
     if effects:
         lines += ["", "**What's driving it** (vs. a typical value)"]
@@ -137,7 +139,7 @@ def respond(message: str, history, model_name: str) -> str:
         lines += [
             "",
             f"<sub>Not specified, so typical values were assumed: {', '.join(missing)}. "
-            f"Model: {model_name} (test ROC-AUC {BUNDLE['metrics'][model_name]:.2f}). "
+            f"Model: {BUNDLE['model_name']}, retention threshold {BUNDLE['threshold']:.0%}. "
             f"Average churn rate in the data is {BUNDLE['base_churn_rate']:.0%}.</sub>",
         ]
     return "\n".join(lines)
@@ -154,10 +156,7 @@ demo = gr.ChatInterface(
     fn=respond,
     title="🛒 Customer Churn Predictor",
     description="Ask in plain English about a customer and get their probability of churning. Type **help** for everything I understand.",
-    examples=[[e, "Random Forest"] for e in EXAMPLES],
-    additional_inputs=[
-        gr.Radio(["Random Forest", "Logistic Regression"], value="Random Forest", label="Model"),
-    ],
+    examples=EXAMPLES,
     cache_examples=False,
 )
 
